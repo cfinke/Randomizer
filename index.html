@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Randomizer</title>
+		<meta charset="UTF-8">
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+			}
+			
+			* {
+				box-sizing: border-box;
+			}
+			
+			body {
+				background-color: turquoise;
+				text-align: center;
+				color: #fff !important;
+			}
+			
+			#choice, p, #start, #restart  {
+				font-family: Helvetica;
+			}
+			
+			p {
+				font-size: 20px;
+				margin-bottom: 10px;
+			}
+			
+			#start {
+				padding: 30px;
+				font-size: 30px;
+				width: 100%;
+				background-color: rgba( 0, 0, 0, 0.1 );
+				color: #fff;
+				border: none;
+				cursor: pointer;
+			}
+			
+			h1 {
+				margin: 0;
+				padding: 0;
+			}
+			
+			#restart {
+				display: none;
+				opacity: 0.50;
+			}
+
+			#choice, #choice_entry {
+				position: relative;
+				top: 50%;
+				transform: translateY(-50%);
+				display: none;
+			}
+			
+			#choice {
+				font-size: 200px;
+			}
+			
+			#choice.final {
+				text-decoration: underline;
+				cursor: pointer;
+			}
+			
+			#choice_entry {
+				text-align: left;
+				width: 500px;
+				margin: 0 auto;
+			}
+			
+			#choices {
+				width: 500px;
+				height: 300px;
+				font-size: 30px;
+				padding: 10px;
+			}
+			
+			#restart {
+				position: absolute;
+				top: 30px;
+				right: 40px;
+				font-size: 30px;
+				color: #fff;
+				text-decoration: none;
+			}
+		</style>
+		<script src="jquery.min.js"></script>
+		<script type="text/javascript">
+			jQuery( function ( $ ) {
+				// Specify choices in the hash: randomizer.html#A,B,C,D,E
+				var choices;
+				var last_choice = false;
+				var cycles = 20;
+				var duration = 7500;
+				
+				function cycle() {
+					$( '#choice' ).removeClass( 'final' );
+
+					var cycle_number = 0;
+
+					function change() {
+						var choice;
+						
+						do {
+							choice = choices[ Math.floor( Math.random() * choices.length ) ];
+						} while ( choice === last_choice && choices.length > 1 );
+						
+						last_choice = choice;
+						
+						$( '#choice' ).text( choice );
+						new Audio( "beep.mp3" ).play();
+						
+						cycle_number++;
+						
+						if ( cycle_number === cycles ) {
+							$( '#choice' ).addClass( 'final' );
+							$( '#audio-choice' ).get(0).play();
+						}
+					}
+					
+					setTimeout( function () {
+						for ( var i = 0; i < cycles; i++ ) {
+							setTimeout( change, 250 + Math.round( duration / cycles * i * Math.sin( i / cycles ) ) );
+						}
+					}, 1000 );
+				}
+				
+				$( '#choice' ).on( 'click', function ( e ) {
+					e.preventDefault();
+					
+					if ( ! $( '#choice' ).hasClass( 'final' ) ) {
+						return;
+					}
+					
+					$( '#choice' ).text( '????????' );
+					$( '#audio-welcome' ).get(0).pause();
+
+					choices = document.location.hash.substring(1).split( "," );
+					
+					choices.forEach( function ( choice, index ) { 
+						choices[index] = decodeURIComponent( choice );
+					} );
+					
+					cycle();
+				} );
+				
+				$( 'body' ).css( 'height', $( document ).height() + "px" );
+				
+				$( '#start' ).on( 'click', function ( e ) {
+					e.preventDefault();
+					
+					var choices_text = $( '#choices' ).val();
+					var choices_list = choices_text.split( "\n" );
+					
+					var anchor_string = "";
+					
+					for ( var i = 0; i < choices_list.length; i++ ) {
+						anchor_string += "," + encodeURIComponent( choices_list[i] );
+					}
+					
+					anchor_string = "#" + anchor_string.substring( 1 );
+					
+					document.location.href = anchor_string;
+					window.location.reload( true );
+				} );
+				
+				if ( document.location.hash.length <= 1 ) {
+					$( '#choice_entry' ).show();
+				}
+				else {
+					$( '#choice' ).show();
+					$( '#audio-welcome' ).animate({volume:0}, 10000).get(0).play();
+					$( '#restart' ).show();
+				}
+			} );
+		</script>
+	</head>
+	<body>
+		<h1 id="choice" class="final">CLICK</h1>
+		<div id="choice_entry">
+			<p>Enter the list of choices, one per line.</p>
+			<textarea id="choices"></textarea>
+			<button id="start">Start the Randomizer!</button>
+		</div>
+		<a href="/randomizer/" id="restart">X</a>
+		<audio id="audio-choice">
+			<source src="ding.mp3">
+		</audio>
+		<audio id="audio-welcome">
+			<source src="gameshow.mp3">
+		</audio>
+	</body>
+</html>
